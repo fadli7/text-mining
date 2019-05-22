@@ -1,3 +1,4 @@
+#%%
 import pandas as pd
 import numpy
 from sklearn.feature_extraction.text import CountVectorizer
@@ -42,32 +43,33 @@ def main():
     """ Data Training """
     df_idf = pd.read_json("data/stackoverflow-data-idf.json", lines=True)
 
+    print(df_idf['body'])
+
     df_idf['text'] = df_idf['title'] + df_idf['body']
-    df_idf['text'] = df_idf['text'].apply(lambda x: pre_process(x))
+    df_idf['text'] = df_idf['text'].apply(lambda x: pre_process(x)) # tokenizing
 
     stopwords = get_stop_words("resources/stopwords.txt")
     docs = df_idf['text'].tolist()
-    cv = CountVectorizer(max_df=0.85, stop_words=stopwords, max_features=10000)
-    word_count_vector = cv.fit_transform(docs)
+    cv = CountVectorizer(stop_words=stopwords)
+    word_count_vector = cv.fit_transform(docs) #filtering
     
     tfidf_transformer = TfidfTransformer(smooth_idf=True, use_idf=True)
     tfidf_transformer.fit(word_count_vector)
 
 
     """ Data Test """
-    df_test = pd.read_json("data/stackoverflow-test.json", lines=True)
-    df_test['text'] = df_test['title'] + df_test['body']
-    df_test['text'] = df_test['text'].apply(lambda x: pre_process(x))
-    docs_test = df_test['text'].tolist()
-
+    # MARK -> Input User
+    sentences = input("\n\nEnter Your Sentences : ")
     feature_name = cv.get_feature_names()
-    doc = docs_test[0]
-    tf_idf_vector = tfidf_transformer.transform(cv.transform([doc]))
+
+    tf_idf_vector = tfidf_transformer.transform(cv.transform([sentences]))
     sorted_items = sort_coo(tf_idf_vector.tocoo())
     keywords = extract_topn_from_vector(feature_name, sorted_items, 10)
+
+    
     
     print("\n======= Doc =======")
-    print(doc)
+    print(sentences)
 
     print("\n======= Keywords =======")
     for k in keywords:
